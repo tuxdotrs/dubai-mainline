@@ -36,9 +36,10 @@ ModemManager's QMI over qrtr data path. See userspace.md.
 
 - The extlinux menu is U-Boot's text menu ("Enter choice:"): phone buttons
   can't type a number, so only the default entry is reachable without a
-  keyboard. Its 5 s timeout didn't fire in the one test (U-Boot chainloaded
-  from U-Boot, with the USB serial console active); check from ABL. Possible
-  fix: bootstd's `bootflow menu`, which uses up/down/enter.
+  keyboard (its 5 s timeout boots it; verified from ABL with all of ABL's
+  arguments passed through). With the USB serial console active the timeout
+  didn't fire. Possible fix: bootstd's `bootflow menu`, which uses
+  up/down/enter.
 - Not installed anywhere yet. Plan: flash to boot_b and switch slots, keeping
   the Linux boot.img on boot_a as the fallback (`fastboot --set-active=a`).
 
