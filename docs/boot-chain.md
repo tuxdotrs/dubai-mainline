@@ -117,6 +117,10 @@ ABL → U-Boot → extlinux menu → kernel + Mobile NixOS initrd from the rootf
   off; without ufs-qcom's regulator support (upstream main, 2026-10-19) UFS
   fails with "link startup failed / Device not present". Don't switch L7B on
   by hand from v2026.10's shell: its RPMh regulator code reset the phone.
+- **Menu:** `u-boot.nix` also writes `/boot/extlinux/u-boot-menu.env`, one
+  `bootmenu` item per generation (volume keys + power) plus U-Boot's tools;
+  `dubai_boot` imports it, extlinux.conf is the fallback. Volume up needs the
+  PM7325 GPIO patch in `bootloader/patches/` and VIN1 (set in preboot).
 - **extlinux.conf** is written by `userspace/devices/motorola-dubai/u-boot.nix`
   on every `switch-to-configuration boot/switch`: NixOS' generic-extlinux
   builder into `/boot` on the rootfs (10 generations), each APPEND ending in

@@ -34,12 +34,13 @@ ModemManager's QMI over qrtr data path. See userspace.md.
 
 ## U-Boot
 
-- The extlinux menu is U-Boot's text menu ("Enter choice:"): phone buttons
-  can't type a number, so only the default entry is reachable without a
-  keyboard (its 5 s timeout boots it; verified from ABL with all of ABL's
-  arguments passed through). With the USB serial console active the timeout
-  didn't fire. Possible fix: bootstd's `bootflow menu`, which uses
-  up/down/enter.
+- Generation menu: U-Boot `bootmenu` built from /boot/extlinux/u-boot-menu.env
+  (volume keys + power, 5 s timeout to the default). bootstd's `bootflow menu`
+  can't list generations: one bootflow per partition for extlinux and BLS.
+- Volume up (PM7325 GPIO 6) needs VIN1; the pinctrl state's
+  `power-source = <1>` doesn't end up in the register (0x8d41 reads 0 after
+  boot, unexplained), so dubai.env's preboot writes it with `pmic write`.
+  With VIN0 the key reads as held and the menu ignores it.
 - Not installed anywhere yet. Plan: flash to boot_b and switch slots, keeping
   the Linux boot.img on boot_a as the fallback (`fastboot --set-active=a`).
 
