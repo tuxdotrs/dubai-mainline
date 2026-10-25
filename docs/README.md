@@ -24,9 +24,11 @@ These each cost hours; one nearly bricked the phone.
 1. **Never let anything rewrite the GPT.** Mobile NixOS `boot-control` uses
    `sgdisk` to mark the slot successful; it rewrote the whole GPT and the
    bootloader then saw no partitions. It is disabled
-   (`mobile.boot.boot-control.enable = false`) and masked on the cmdline. If
-   slot marking is ever needed, flip attribute bits only (as pmOS' `qbootctl`
-   does). Recovery needs the stock `gpt.bin` — see [deploy.md](deploy.md#recovering-a-corrupted-gpt).
+   (`mobile.boot.boot-control.enable = false`) and masked on the cmdline.
+   Slots are marked successful by `qbootctl -m` instead (service
+   `mark-boot-successful`), which only flips attribute bits: verified by
+   diffing every LUN's GPT before/after (one byte per `*_b` entry on LUN 5
+   plus the CRCs). Recovery needs the stock `gpt.bin` — see [deploy.md](deploy.md#recovering-a-corrupted-gpt).
 2. **Back up `boot_a` before writing a new one**, and keep the matching system
    generation: a generation only carries its own kernel's modules.
 3. **Back up the modem partitions before any risky flash** (modemst1/2, fsg,

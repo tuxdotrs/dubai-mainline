@@ -24,9 +24,6 @@ ModemManager's QMI over qrtr data path. See userspace.md.
 - Only 144 Hz exposed (120/90/60 modes missing, as on pmOS).
 - Voice-call audio not set up (pmOS: q6voiced + VoiceCall UCM verb).
 - SIM recovery after suspend under Plasma not verified.
-- Nothing marks the slot successful → retry counter runs down over many
-  boots; `fastboot --set-active=a` resets it. A safe fix would flip only the
-  slot attribute bits (qbootctl-style), never rewrite the GPT.
 - Ramdisk headroom below the DTB offset is ~2 MB; adding stage-1 modules or
   firmware can overflow it.
 - Mobile NixOS kernel-builder DEPMOD bug (kernels ≥ 7.3) to report upstream.
@@ -41,10 +38,10 @@ ModemManager's QMI over qrtr data path. See userspace.md.
   `power-source = <1>` doesn't end up in the register (0x8d41 reads 0 after
   boot, unexplained), so dubai.env's preboot writes it with `pmic write`.
   With VIN0 the key reads as held and the menu ignores it.
-- Nothing marks a slot successful: every boot (incl. `fastboot boot` tests)
-  counts down the active slot's retries (7). At 0 ABL marks it unbootable
-  and silently switches slots; this happened to slot a on 2026-10-26 after a
-  day of testing. `fastboot --set-active=b` (and `=a`) resets the counter.
+- `fastboot boot` tests still count down the active slot's retries (only a
+  NixOS boot that reaches multi-user.target marks the slot successful). At 0
+  ABL marks the slot unbootable and silently switches slots (slot a hit this
+  on 2026-10-26). `fastboot --set-active=<slot>` resets the counter.
 
 ## Dual boot with LineageOS (analysis, not done)
 
