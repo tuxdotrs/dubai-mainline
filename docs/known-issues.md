@@ -41,8 +41,10 @@ ModemManager's QMI over qrtr data path. See userspace.md.
   `power-source = <1>` doesn't end up in the register (0x8d41 reads 0 after
   boot, unexplained), so dubai.env's preboot writes it with `pmic write`.
   With VIN0 the key reads as held and the menu ignores it.
-- Not installed anywhere yet. Plan: flash to boot_b and switch slots, keeping
-  the Linux boot.img on boot_a as the fallback (`fastboot --set-active=a`).
+- Nothing marks a slot successful: every boot (incl. `fastboot boot` tests)
+  counts down the active slot's retries (7). At 0 ABL marks it unbootable
+  and silently switches slots; this happened to slot a on 2026-10-26 after a
+  day of testing. `fastboot --set-active=b` (and `=a`) resets the counter.
 
 ## Dual boot with LineageOS (analysis, not done)
 

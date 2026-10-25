@@ -107,11 +107,16 @@ Normal NixOS (systemd). Boot to Plasma takes ~15 s after stage-2 starts.
 - `/sys/fs/pstore` stays empty: `CONFIG_PSTORE_RAM` is off in pmOS' config
   even though the DT reserves `ramoops@ae000000`.
 
-## U-Boot path (work in progress, `fastboot boot` only)
+## U-Boot path (installed on boot_b, the active slot)
 
 `bootloader/` builds mainline U-Boot as a boot.img that ABL loads like a
 kernel (gzip'd `u-boot-nodtb.bin` + the dubai DTB, same header as above):
-ABL → U-Boot → extlinux menu → kernel + Mobile NixOS initrd from the rootfs.
+ABL → U-Boot (boot_b) → generation menu → kernel + Mobile NixOS initrd from
+the rootfs. Since 2026-10-26 slot b is active: dtbo_b zeroed, vbmeta_b with
+verification disabled, boot_b = `build/bootloader/u-boot.img`. boot_a still
+holds the Linux boot.img (ABL → kernel directly); `fastboot --set-active=a`
+switches back. Kernel and stage-1 updates now arrive with
+`switch-to-configuration boot` alone (no boot_a write) when booting via U-Boot.
 
 - **UFS needs U-Boot past v2026.10.** ABL leaves the UFS 3.1 `vcc` rail (L7B)
   off; without ufs-qcom's regulator support (upstream main, 2026-10-19) UFS
