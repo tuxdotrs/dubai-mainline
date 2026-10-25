@@ -1,93 +1,116 @@
 # Mobile NixOS on the Motorola Edge 30 (dubai)
 
-postmarketOS' mainline kernel (its binary package, unpacked) with
-[Mobile NixOS](https://github.com/mobile-nixos/mobile-nixos) and Phosh.
-Device support is a port of pmOS `device-motorola-dubai`; the pmaports recipes
-it follows are in `reference/pmaports/`.
+The [sc7280-mainline](https://github.com/sc7280-mainline/linux) kernel with
+[Mobile NixOS](https://github.com/mobile-nixos/mobile-nixos) and Plasma Mobile.
+Device support is a port of pmOS `device-motorola-dubai`.
 
 ## Layout
 
-    configuration.nix          the system on the phone (user, Phosh, ssh, ...)
-    default.nix                entry point: Mobile NixOS + this device + configuration.nix
+    build.sh                   build entry point (see below)
+    default.nix                Mobile NixOS + this device + configuration.nix
+    configuration.nix          the system on the phone (user, Plasma Mobile, ssh, ...)
+    kernel/
+      linux/                   submodule: sc7280-mainline/linux, tag v7.3.0-sc7280
+      config                   kernel config: pmOS' linux-postmarketos-qcom-sc7280 config
+      default.nix              kernel build (LLVM=1, cross-compiled)
+    mobile-nixos/              submodule: tuxdotrs/mobile-nixos, branch motorola-dubai
+                               (also pins nixpkgs, in npins/)
     devices/motorola-dubai/    device definition (out-of-tree Mobile NixOS device)
-      default.nix              boot image, stage-1, USB, SoC
-      kernel/                  the pmOS kernel package linux-postmarketos-qcom-sc7280, unpacked
+      default.nix              boot image, stage-1, USB, kernel choice
+      kernel-prebuilt/         fallback kernel: pmOS' binary package, unpacked
       firmware.nix             FairBlobs/dubai-firmware + linux-firmware subset
-      qcom.nix                 rmtfs, tqftpserv, hexagonrpcd, bootmac, sensors, modem
+      qcom.nix                 rmtfs, tqftpserv, hexagonrpcd, bootmac, sensors, modem, SIM
       sound.nix                sc7280 ALSA UCM + wireplumber tweaks
-    mobile-nixos/              Mobile NixOS checkout, branch `motorola-dubai`
-    flash.sh                   fastboot flashing
-    reference/pmaports/        pmOS recipes this is ported from
-    stuff-might-need-later/    building the kernel from source (parked, see its README)
+    flash.sh                   fastboot flashing of a full image
+    stuff-might-need-later/    pmOS' exact clang 23 toolchain (parked)
 
-`mobile-nixos/` carries small commits on top of upstream (it also pins nixpkgs,
-in `npins/`): the `qualcomm-sm7325` SoC, `mobile.system.android.bootimg.extraArgs`
-(ABL on dubai needs a header v2 boot image with a DTB section), and stage-1
-fixes (console for init, zstd initrd, non-fatal udev trigger). It is not in
-this repo; the commits are kept as `mobile-nixos-patches/`. To recreate it:
+The mobile-nixos fork carries what dubai needs on top of upstream: the
+`qualcomm-sm7325` SoC, `mobile.system.android.bootimg.extraArgs` (ABL wants a
+header v2 boot image with a DTB section), and stage-1 fixes (console for init,
+zstd initrd, non-fatal udev trigger).
 
-    git clone https://github.com/mobile-nixos/mobile-nixos
-    git -C mobile-nixos checkout -b motorola-dubai 2c132754323fc1915e8d21dcfc0ef68ab084c6fb
-    git -C mobile-nixos am ../mobile-nixos-patches/*.patch
+## Getting the sources
 
-After changing it, refresh the patches:
-`git -C mobile-nixos format-patch 2c132754..HEAD -o ../mobile-nixos-patches`.
+    git clone --recursive --shallow-submodules <this repo>
+    # or, in an existing clone:
+    git submodule update --init --depth 1
 
 ## Build
 
-The system is built for aarch64 natively through binfmt (most of it comes from
-cache.nixos.org). The kernel isn't compiled: it is pmOS' build, taken from
-mirror.postmarketos.org. The mirror only keeps the latest revision; to update,
-bump the revision and hash in devices/motorola-dubai/kernel/default.nix.
+    ./build.sh [kernel|system|boot|images]      # default: images
 
+Results are symlinks in `build/`, logs in `build/logs/`. `images` gives
+`build/images/boot.img` and `system.img` (ext4 rootfs, label NIXOS_SYSTEM).
+Each target is a plain nix-build too:
+
+    nix-build -E '(import ./default.nix {}).config.mobile.boot.stage-1.kernel.package'
+    nix-build -A config.system.build.toplevel
+    nix-build -A outputs.android.android-bootimg
     nix-build -A outputs.default
 
-`result/` then has `boot.img` and `system.img` (ext4 rootfs, label NIXOS_SYSTEM).
+The kernel is cross-compiled from x86_64 (`motorola-dubai.kernelBuildSystem`);
+the rest is built for aarch64 natively through binfmt, mostly from
+cache.nixos.org.
 
-Panel variant: `motorola-dubai.panel = "tianma";` in configuration.nix if the
-bootloader screen shows a Tianma panel (default is CSOT).
+Options for configuration.nix:
 
-## Flash (replaces pmOS)
+- `motorola-dubai.kernel = "prebuilt";` uses pmOS' kernel package instead of
+  building kernel/.
+- `motorola-dubai.panel = "tianma";` if the bootloader screen shows a Tianma
+  panel (default is CSOT).
 
-    ./flash.sh
+### Bumping the kernel
 
-Flashes an empty dtbo and boot.img to slot b (`SLOT=a ./flash.sh` for the
-other), the rootfs to userdata, and switches to that slot. LineageOS on the
-other slot is left alone (its userdata is not, it's shared).
-vbmeta was already flashed with verification disabled by pmbootstrap.
+    git -C kernel/linux fetch --depth 1 origin tag v7.3.1-sc7280
+    git -C kernel/linux checkout v7.3.1-sc7280
+    # set `version` in kernel/default.nix, build, then
+    git add kernel/linux kernel/default.nix
 
-On first boot the rootfs grows to fill userdata. Login: `user` / `1234`
-(also the Phosh PIN); change it with `passwd`.
+`make oldconfig` takes defaults for options kernel/config doesn't have; the
+build log shows them. To refresh kernel/config, copy the newer one from
+pmaports (`device/community/linux-postmarketos-qcom-sc7280`).
 
-## Updating
+## Flash
 
-Build on the PC and push over the network (USB, Wi-Fi, ...):
+    SLOT=a ./flash.sh build/images
 
-    nixos-rebuild switch --file default.nix --target-host user@<phone-ip> --elevate sudo
+Flashes an empty dtbo and boot.img to the slot, the rootfs to userdata, and
+activates the slot. Bootloader fastboot refuses `flash userdata`; use
+fastbootd. vbmeta was already flashed with verification disabled.
+
+On first boot the rootfs grows to fill userdata. Login: `user` / `1234`;
+change it with `passwd`.
+
+## Updating a running phone
+
+USB networking doesn't work once the ADSP is up, so this goes over Wi-Fi:
+
+    ./build.sh system boot
+    nix copy --to ssh://user@<phone-ip> ./build/system
+    ssh user@<phone-ip>
+      sudo nix-env -p /nix/var/nix/profiles/system --set <system path>
+      sudo <system path>/bin/switch-to-configuration boot
 
 Mobile NixOS boots the newest generation from the rootfs, but the kernel and
-stage-1 come from boot.img, which nixos-rebuild does not rewrite. After a
-change to the kernel or stage-1, re-flash it:
+stage-1 come from boot.img. After a kernel or stage-1 change also write it:
 
-    nix-build -A outputs.android.android-bootimg -o result-boot
-    fastboot flash boot_b result-boot
+    dd if=boot.img of=/dev/disk/by-partlabel/boot_a     # on the phone, or
+    fastboot flash boot_a build/boot
 
 ## How boot works here
 
 ABL ignores the boot.img cmdline and passes its own, including `init=/init` and
 no `root=`. The Mobile NixOS stage-1 skips that `init=`, finds the rootfs by its
-NIXOS_SYSTEM label and boots `/nix/var/nix/profiles/system` (or, on first boot,
-the system in `/nix-path-registration`). Slot b is marked successful by
-Mobile NixOS boot-control, so ABL doesn't fall back to slot a after 7 boots.
+NIXOS_SYSTEM label and boots `/nix/var/nix/profiles/system`.
 
-## Debugging
-
-If the phone doesn't come up, stage-1 exposes USB networking (RNDIS) and the
-recovery GUI; logs are kept in /run/log during stage-1 and pstore
-(`/sys/fs/pstore`) survives a crash into Lineage or pmOS.
+Mobile NixOS boot-control is disabled: it marks the slot successful with
+sgdisk, which rewrote the GPT so that ABL found no partitions. Nothing marks the
+slot successful now, so after a few boots `fastboot --set-active=a` resets
+the retry counter.
 
 ## Not done yet
 
+- USB networking in stage-2 (gadget "not attached" once the ADSP runs, also on pmOS)
+- mobile data (the connection flaps; keep it off)
 - voice call audio (pmOS uses q6voiced + the VoiceCall UCM verb)
 - 120/90/60 Hz display modes (only 144 Hz is exposed, as on pmOS)
-- regenerating boot.img on `nixos-rebuild` (kexec stage-0 is not enabled)

@@ -1,9 +1,8 @@
-# Separate checkout, recreated from mobile-nixos-patches/ (see README.md)
-/mobile-nixos/
 # Build outputs, flashing images, logs
 /images/
 /logs/
 /debug/
 result*
+/build/
 # pmaports excerpts, looked at while porting; not used by the build
 /reference/

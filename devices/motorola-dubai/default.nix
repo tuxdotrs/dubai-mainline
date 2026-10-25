@@ -5,7 +5,20 @@
 let
   cfg = config.motorola-dubai;
 
-  kernel = pkgs.callPackage ./kernel { };
+  # The kernel is cross-compiled when the host can't build aarch64 natively,
+  # since building it under binfmt emulation takes hours.
+  kernelPkgs =
+    if cfg.kernelBuildSystem == null || cfg.kernelBuildSystem == pkgs.stdenv.buildPlatform.system
+    then pkgs
+    else import pkgs.path {
+      localSystem = cfg.kernelBuildSystem;
+      crossSystem = pkgs.stdenv.hostPlatform.system;
+      inherit (pkgs) overlays;
+    };
+  kernel =
+    if cfg.kernel == "source"
+    then kernelPkgs.callPackage ../../kernel { }
+    else pkgs.callPackage ./kernel-prebuilt { };
 
   dtb = "dtbs/qcom/sm7325-motorola-dubai-${cfg.panel}.dtb";
 in
@@ -16,6 +29,22 @@ in
   ];
 
   options.motorola-dubai = {
+    kernel = lib.mkOption {
+      type = lib.types.enum [ "source" "prebuilt" ];
+      default = "source";
+      description = ''
+        "source" builds ../../kernel (sc7280-mainline submodule);
+        "prebuilt" uses pmOS's binary package from ./kernel-prebuilt.
+      '';
+    };
+    kernelBuildSystem = lib.mkOption {
+      type = with lib.types; nullOr str;
+      default = "x86_64-linux";
+      description = ''
+        System the kernel is (cross-)compiled on. null builds it like
+        everything else.
+      '';
+    };
     panel = lib.mkOption {
       type = lib.types.enum [ "csot" "tianma" ];
       default = "csot";
@@ -80,6 +109,10 @@ in
     # whole GPT; after it ran, ABL could not read any partition (slot-count 1).
     # pmOS uses qbootctl, which only flips the attribute bits.
     mobile.boot.boot-control.enable = false;
+
+    # The kernel config is pmOS's. Mobile NixOS' required options (firewall,
+    # binder, HID sensors... as built-ins) would change it, so they are dropped.
+    mobile.kernel.structuredConfig = lib.mkForce [ ];
 
     mobile.system.type = "android";
     mobile.system.android = {

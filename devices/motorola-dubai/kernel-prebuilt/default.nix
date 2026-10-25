@@ -4,7 +4,7 @@
 # or put a saved copy back in the store with `nix-store --add-fixed sha256 <apk>`.
 # The apk has no .config; config-postmarketos-qcom-sc7280.aarch64 is the one from
 # pmaports at the same pkgrel (NixOS reads it, e.g. for ASLR sysctls).
-# Building it from source instead: ../../../stuff-might-need-later/kernel-from-source
+# The default is building from source: ../../../kernel
 { lib, stdenv, fetchurl, kmod, ... }:
 
 stdenv.mkDerivation rec {
