@@ -1,0 +1,21 @@
+--- a/src/main.c
++++ b/src/main.c
+@@ -917,13 +917,15 @@
+ kernel_console_is_ttynull (void)
+ {
+         char *kernel_console = ply_get_primary_kernel_console_type ();
++        bool result;
+ 
+         /* If the primary console is ttynull, the kernel console is virtual.
++         * /proc/consoles is empty with console=null: no console at all.
+          */
+-        if (strcmp (kernel_console, "ttynull") == 0)
+-                return true;
++        result = kernel_console != NULL && strcmp (kernel_console, "ttynull") == 0;
++        free (kernel_console);
+ 
+-        return false;
++        return result;
+ }
+ 
+ static bool

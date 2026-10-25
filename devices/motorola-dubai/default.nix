@@ -145,6 +145,12 @@ in
     # disabled (see below); ABL keeps the boot.img cmdline.
     boot.kernelParams = [ "earlycon" "systemd.mask=boot-control.service" ];
 
+    # ABL passes console=null, so /proc/consoles is empty and plymouthd
+    # segfaults (strcmp on NULL in kernel_console_is_ttynull).
+    boot.plymouth.package = pkgs.plymouth.overrideAttrs (o: {
+      patches = (o.patches or [ ]) ++ [ ./plymouth-empty-proc-consoles.patch ];
+    });
+
     # USB networking from stage-1 (172.16.42.1, RNDIS); the gadget stays bound
     # in stage-2, so sshd is reachable over USB even when nothing else works.
     mobile.boot.stage-1.networking.enable = true;

@@ -21,7 +21,6 @@ ModemManager's QMI over qrtr data path. See userspace.md.
 
 ## Other
 
-- Plymouth segfaults (harmless).
 - Only 144 Hz exposed (120/90/60 modes missing, as on pmOS).
 - Voice-call audio not set up (pmOS: q6voiced + VoiceCall UCM verb).
 - SIM recovery after suspend under Plasma not verified.

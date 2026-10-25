@@ -113,6 +113,10 @@ Quirks:
 - Haptics via `programs.feedbackd`.
 - Previous desktop was Phosh (generations ≤ system-5).
 
-## Known-harmless failed units
+## Plymouth
 
-- `plymouth-start.service`: plymouthd segfaults; boot works without it.
+ABL passes `console=null`, so `/proc/consoles` is empty and stock plymouthd
+segfaults (`strcmp` on NULL in `kernel_console_is_ttynull`).
+`devices/motorola-dubai/plymouth-empty-proc-consoles.patch` fixes that; the
+splash then runs until the display manager starts. `systemctl --failed` should
+be empty on a healthy boot.
