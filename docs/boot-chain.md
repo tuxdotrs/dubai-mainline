@@ -106,3 +106,29 @@ Normal NixOS (systemd). Boot to Plasma takes ~15 s after stage-2 starts.
   Wi-Fi, so journal timestamps of early boots overlap.
 - `/sys/fs/pstore` stays empty: `CONFIG_PSTORE_RAM` is off in pmOS' config
   even though the DT reserves `ramoops@ae000000`.
+
+## U-Boot path (work in progress, `fastboot boot` only)
+
+`bootloader/` builds mainline U-Boot as a boot.img that ABL loads like a
+kernel (gzip'd `u-boot-nodtb.bin` + the dubai DTB, same header as above):
+ABL → U-Boot → extlinux menu → kernel + Mobile NixOS initrd from the rootfs.
+
+- **UFS needs U-Boot past v2026.10.** ABL leaves the UFS 3.1 `vcc` rail (L7B)
+  off; without ufs-qcom's regulator support (upstream main, 2026-10-19) UFS
+  fails with "link startup failed / Device not present". Don't switch L7B on
+  by hand from v2026.10's shell: its RPMh regulator code reset the phone.
+- **extlinux.conf** is written by `userspace/devices/motorola-dubai/u-boot.nix`
+  on every `switch-to-configuration boot/switch`: NixOS' generic-extlinux
+  builder into `/boot` on the rootfs (10 generations), each APPEND ending in
+  `${abl_bootargs}`. The entry's `init=<generation>/init` picks the generation
+  (Mobile NixOS' stage-1 honours `init=` except ABL's `init=/init`).
+- **ABL's command line** (androidboot.*, wifimacaddr, btmacaddr) is in the
+  DTB's `/chosen/bootargs`; `dubai_boot` in `bootloader/dubai.env` copies it to
+  `$abl_bootargs`. U-Boot passes its own control DTB to Linux (no FDT line),
+  which prints harmless `reserving fdt memory region failed … -17`.
+- **Debugging:** U-Boot's menu (shown after a failed boot, or hold power)
+  has "Enable serial console gadget": a U-Boot shell on `/dev/ttyACM0`.
+  `fastboot oem console` jams U-Boot's fastboot; prefer the serial console.
+- A U-Boot `fastboot boot` of another image chainloads it with U-Boot's
+  fixed-up DTB: no ABL bootargs, `u-boot,version` in `/chosen`. Test from
+  Motorola's fastboot (Power + Volume Down) instead.

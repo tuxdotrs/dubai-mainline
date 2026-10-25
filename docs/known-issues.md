@@ -32,6 +32,16 @@ ModemManager's QMI over qrtr data path. See userspace.md.
 - Mobile NixOS kernel-builder DEPMOD bug (kernels ≥ 7.3) to report upstream.
 - `kernel/patches/qrtr-ns-wait-for-hello.patch` to send upstream (netdev).
 
+## U-Boot
+
+- The extlinux menu is U-Boot's text menu ("Enter choice:"): phone buttons
+  can't type a number, so only the default entry is reachable without a
+  keyboard. Its 5 s timeout didn't fire in the one test (U-Boot chainloaded
+  from U-Boot, with the USB serial console active); check from ABL. Possible
+  fix: bootstd's `bootflow menu`, which uses up/down/enter.
+- Not installed anywhere yet. Plan: flash to boot_b and switch slots, keeping
+  the Linux boot.img on boot_a as the fallback (`fastboot --set-active=a`).
+
 ## Dual boot with LineageOS (analysis, not done)
 
 Possible as one OS per A/B slot (NixOS slot a, Lineage slot b; switch with
