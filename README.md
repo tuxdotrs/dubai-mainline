@@ -12,7 +12,7 @@ Device support is a port of pmOS `device-motorola-dubai`.
     kernel/
       linux/                   submodule: sc7280-mainline/linux, tag v7.3.0-sc7280
       config                   kernel config: pmOS' linux-postmarketos-qcom-sc7280 config
-      default.nix              kernel build (LLVM=1, cross-compiled)
+      default.nix              kernel build: nixpkgs linuxManualConfig, clang/lld, cross-compiled
     mobile-nixos/              submodule: tuxdotrs/mobile-nixos, branch motorola-dubai
                                (also pins nixpkgs, in npins/)
     devices/motorola-dubai/    device definition (out-of-tree Mobile NixOS device)

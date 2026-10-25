@@ -2,7 +2,7 @@
 
     toolchain.nix   nixpkgs 02c087f3 for clang/lld 23.1.3 (pmOS's version), zstd overlay
 
-The kernel in ../kernel is built with the Mobile NixOS pin's clang and a
+The kernel in ../kernel is built with nixpkgs linuxManualConfig, the pin's clang and a
 non-strict config (pmOS's config + `make oldconfig`). toolchain.nix is for
 building it with pmOS's exact compiler and an unmodified config again.
 
@@ -23,5 +23,6 @@ the 7.2.9 source):
 
 In devices/motorola-dubai/default.nix, import it with the kernel's
 localSystem/crossSystem and pass `toolchain.llvmPackages_23` to ../kernel in
-place of the pin's `llvmPackages`; set
-`mobile.boot.stage-1.kernel.useStrictKernelConfig = true` for the strict check.
+place of the pin's `llvmPackages` (kernel/default.nix takes the stdenv and the
+LLVM tools from it). linuxManualConfig has no strict config check; compare the
+built .config (in the kernel's dev output) with ../kernel/config by hand.

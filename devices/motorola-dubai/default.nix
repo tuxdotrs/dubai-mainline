@@ -110,10 +110,6 @@ in
     # pmOS uses qbootctl, which only flips the attribute bits.
     mobile.boot.boot-control.enable = false;
 
-    # The kernel config is pmOS's. Mobile NixOS' required options (firewall,
-    # binder, HID sensors... as built-ins) would change it, so they are dropped.
-    mobile.kernel.structuredConfig = lib.mkForce [ ];
-
     mobile.system.type = "android";
     mobile.system.android = {
       device_name = "dubai";
