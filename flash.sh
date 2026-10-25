@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
 # Flash Mobile NixOS over pmOS. Phone in fastboot mode (adb reboot bootloader,
 # or power + volume down).
-#   ./flash.sh [images-dir]        default: ./result (nix-build -A outputs.default)
+#   ./flash.sh [images-dir]        default: build/images (./build.sh images)
 # SLOT picks the slot for boot/dtbo (default b). On this phone pmOS, and now
 # NixOS, live on slot a: SLOT=a ./flash.sh images
 # The rootfs goes to userdata, which is shared by both slots: this erases pmOS.
 set -euo pipefail
 cd "$(dirname "$0")"
 
-IMG=${1:-result}
+IMG=${1:-build/images}
 SLOT=${SLOT:-b}
 FASTBOOT=${FASTBOOT:-fastboot}
 
 [ -f "$IMG/boot.img" ] && [ -f "$IMG/system.img" ] || {
-	echo "no boot.img/system.img in $IMG; run: nix-build -A outputs.default" >&2
+	echo "no boot.img/system.img in $IMG; run: ./build.sh images" >&2
 	exit 1
 }
 

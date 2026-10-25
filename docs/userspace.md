@@ -3,7 +3,7 @@
 Everything here is ported from pmOS (`device-motorola-dubai`, `soc-qcom`,
 `soc-qcom-modem`, `soc-qcom-sc7280`) unless noted.
 
-## Firmware (`devices/motorola-dubai/firmware.nix`)
+## Firmware (`userspace/devices/motorola-dubai/firmware.nix`)
 
 From https://github.com/FairBlobs/dubai-firmware (pmOS
 `firmware-motorola-dubai`), installed to `lib/firmware/qcom/sm7325/motorola/dubai/`:
@@ -17,7 +17,7 @@ sensors + socinfo). Unfree; allowed via `allowUnfreePredicate`.
 Remoteprocs and their firmware (`/sys/class/remoteproc/*/{name,firmware,state}`):
 `modem`, `adsp`, `wpss` (Wi-Fi), `cdsp` — all should be `running`.
 
-## Qualcomm services (`devices/motorola-dubai/qcom.nix`)
+## Qualcomm services (`userspace/devices/motorola-dubai/qcom.nix`)
 
 The Mobile NixOS overlay pins 2020-era qrtr/rmtfs/tqftpserv for SDM845, so the
 current ones are built from nixpkgs expressions directly (`fromNixpkgs`).
@@ -95,7 +95,7 @@ period 4096×6, headroom 512). Audio and camera work. The wcd937x
 "Impedance detect ramp error" / q6afe "Unknown cmd" messages at boot are
 harmless. Voice-call audio is not done (pmOS uses q6voiced).
 
-## Desktop: Plasma Mobile (`configuration.nix`)
+## Desktop: Plasma Mobile (`userspace/configuration.nix`)
 
 nixpkgs has no Plasma Mobile option: enable Plasma 6, SDDM (wayland),
 `sessionPackages = [ kdePackages.plasma-mobile ]`,
@@ -118,6 +118,6 @@ Quirks:
 
 ABL passes `console=null`, so `/proc/consoles` is empty and stock plymouthd
 segfaults (`strcmp` on NULL in `kernel_console_is_ttynull`).
-`devices/motorola-dubai/plymouth-empty-proc-consoles.patch` fixes that; the
+`userspace/devices/motorola-dubai/plymouth-empty-proc-consoles.patch` fixes that; the
 splash then runs until the display manager starts. `systemctl --failed` should
 be empty on a healthy boot.

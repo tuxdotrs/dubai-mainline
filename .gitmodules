@@ -1,8 +1,12 @@
-[submodule "kernel/linux"]
-	path = kernel/linux
-	url = https://github.com/sc7280-mainline/linux
-	shallow = true
-[submodule "mobile-nixos"]
-	path = mobile-nixos
-	url = https://github.com/tuxdotrs/mobile-nixos
-	branch = motorola-dubai
+[submodule "bootloader"]
+	path = bootloader
+	url = https://github.com/tuxdotrs/dubai-mainline-bootloader
+	branch = main
+[submodule "kernel"]
+	path = kernel
+	url = https://github.com/tuxdotrs/dubai-mainline-kernel
+	branch = main
+[submodule "userspace"]
+	path = userspace
+	url = https://github.com/tuxdotrs/dubai-mainline-userspace
+	branch = main

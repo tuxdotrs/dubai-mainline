@@ -24,7 +24,7 @@ M=$(nix-store -q --outputs "$(nix-store -q --deriver "$K")" | grep -- '-modules$
 V=$(ls "$M/lib/modules")
 DTB=$K/dtbs/qcom/sm7325-motorola-dubai-$PANEL.dtb
 
-pkgs="let p = import $SRC/mobile-nixos/pkgs.nix { overlays = [ (import $SRC/mobile-nixos/overlay/overlay.nix) ]; }; in"
+pkgs="let p = import $SRC/userspace/mobile-nixos/pkgs.nix { overlays = [ (import $SRC/userspace/mobile-nixos/overlay/overlay.nix) ]; }; in"
 tool() { nix-build --no-out-link -E "$pkgs p.$1" 2>/dev/null; }
 BUSYBOX=$(tool pkgsCross.aarch64-multiplatform.pkgsStatic.busybox)/bin/busybox
 PATH=$(tool mkbootimg)/bin:$(tool zstd)/bin:$(tool cpio)/bin:$(tool python3)/bin:$PATH
@@ -80,7 +80,7 @@ chmod 755 "$R/init" "$R/debug/sh" "$R/debug/busybox"
 
 ( cd "$R" && find . | cpio -o -H newc --owner=root:root --quiet | zstd -19 -q ) > "$W/initrd.zst"
 cat "$K/Image.gz" "$DTB" > "$W/kernel"
-# Offsets as in devices/motorola-dubai/default.nix (pmOS deviceinfo_flash_*)
+# Offsets as in userspace/devices/motorola-dubai/default.nix (pmOS deviceinfo_flash_*)
 mkbootimg --header_version 2 \
   --kernel "$W/kernel" --ramdisk "$W/initrd.zst" --dtb "$DTB" \
   --base 0x0 --kernel_offset 0x8000 --ramdisk_offset 0x1000000 \

@@ -12,21 +12,22 @@ git clone --recursive --shallow-submodules <repo>     # or: git submodule update
 ./build.sh kernel system boot -- --cores 16 -j 6      # results in build/, logs in build/logs/
 ```
 
-`build.sh` targets map to:
+`build.sh` targets map to (`scripts/build*.sh`, all from `userspace/default.nix`):
 
 | target | nix attribute |
 |---|---|
-| kernel | `(import ./default.nix {}).config.mobile.boot.stage-1.kernel.package` |
+| kernel | `(import ./userspace/default.nix {}).config.mobile.boot.stage-1.kernel.package` |
 | system | `-A config.system.build.toplevel` |
 | boot | `-A outputs.android.android-bootimg` |
 | images | `-A outputs.default` (boot.img + system.img) |
+| bootloader | `bootloader/default.nix` (U-Boot, WIP) |
 
 Kernel builds take ~10–15 min on 16 cores; a fresh clone of the repo produces
 bit-identical derivations (verified).
 
 ## Reaching the phone
 
-- **SSH over Wi-Fi** as `user` (password/PIN from `configuration.nix`;
+- **SSH over Wi-Fi** as `user` (password/PIN from `userspace/configuration.nix`;
   `sudo` uses the same password). The address changes every boot — find it by
   host key:
 

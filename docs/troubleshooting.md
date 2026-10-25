@@ -24,7 +24,7 @@
 | Stops at a "generation" menu every boot | `boot_as_recovery = true` | boot-chain.md |
 | ABL shows no partitions / only fastboot, slot-count 1 | GPT rewritten (boot-control) | deploy.md GPT recovery |
 | Boots, but no Wi-Fi, no remoteprocs, USB 172.16.42.1 works | kernel in boot.img ≠ modules of the profile | deploy.md rollback |
-| No remoteprocs / Wi-Fi with the prebuilt kernel | empty `modules.dep` from the apk | kernel-prebuilt runs `depmod` |
+| No remoteprocs / Wi-Fi with the prebuilt kernel | empty `modules.dep` from the apk | `kernel/prebuilt` runs `depmod` |
 | Phone powers off ~15–30 s into boot, journal "Power key pressed short" | someone pressed power before Plasma started | harmless |
 | UI/touch laggy, plasmashell QDBusConnection thread ~70% CPU | mobile-data connection flapping | userspace.md, `nmcli c down Internet` + restart plasmashell |
 | SIM "missing" | no UIM provisioning session | `sim-provisioning.service` (watcher; `journalctl -u sim-provisioning`), check `journalctl -k | grep "crash detected in modem"` |

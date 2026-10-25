@@ -40,17 +40,29 @@ These each cost hours; one nearly bricked the phone.
 
 ## Repository map
 
-    build.sh                   ./build.sh [kernel|system|boot|images] → build/
-    default.nix                Mobile NixOS + device + configuration.nix
-    configuration.nix          the phone's system (Plasma Mobile, user, ssh…)
-    kernel/linux/              submodule: sc7280-mainline/linux (tag v7.3.0-sc7280)
-    kernel/config              pmOS kernel config (+ HW_RANDOM_QCOM)
-    kernel/default.nix         nixpkgs linuxManualConfig, clang/lld, cross
-    mobile-nixos/              submodule: tuxdotrs/mobile-nixos, branch motorola-dubai
-    devices/motorola-dubai/    device module, firmware, qcom services, sound
+Meta repo (like SuperTurtleDev/iceland-mainline) with one submodule per part:
+
+    build.sh                   ./build.sh [kernel|system|boot|images|bootloader] → build/
+    scripts/                   buildkernel.sh, builduserspace.sh, buildbl.sh (called by build.sh)
     flash.sh                   full fastboot flash
     tools/                     debug boot image builder, stock gpt.bin (GPT recovery)
-    stuff-might-need-later/    parked clang-23 toolchain (pmOS' exact compiler)
+    docs/                      these notes
+    bootloader/                submodule: tuxdotrs/dubai-mainline-bootloader (U-Boot port, WIP)
+      u-boot/                    submodule: u-boot/u-boot, tag v2026.10
+    kernel/                    submodule: tuxdotrs/dubai-mainline-kernel
+      linux/                     submodule: sc7280-mainline/linux (tag v7.3.0-sc7280)
+      config                     pmOS kernel config (+ our additions)
+      patches/                   kernel patches (kernelPatches)
+      default.nix                nixpkgs linuxManualConfig, clang/lld, cross
+      prebuilt/                  fallback: pmOS' binary kernel
+      toolchain/                 parked clang-23 toolchain (pmOS' exact compiler)
+    userspace/                 submodule: tuxdotrs/dubai-mainline-userspace
+      default.nix                Mobile NixOS + device + configuration.nix
+      configuration.nix          the phone's system (Plasma Mobile, user, ssh…)
+      devices/motorola-dubai/    device module, firmware, qcom services, sound
+      mobile-nixos/              submodule: tuxdotrs/mobile-nixos, branch motorola-dubai
+
+Clone with `git clone --recursive --shallow-submodules`.
 
 Upstream references used throughout: postmarketOS pmaports
 (`device/community/device-motorola-dubai`, `linux-postmarketos-qcom-sc7280`,

@@ -1,20 +1,19 @@
 #!/usr/bin/env bash
-# Build entry point for the dubai (Motorola Edge 30) Mobile NixOS port.
+# Meta-repo build entry point for the dubai (Motorola Edge 30, SM7325) port.
 #
-#   ./build.sh [target...]        default: images
+#   ./build.sh [target...] [-- nix-build args]      default: images
 #
 # Targets (results are symlinks in build/, logs in build/logs/):
-#   kernel   the kernel package (Image.gz, dtbs, modules)  from kernel/
-#   system   the NixOS system (toplevel), for nix copy + switch-to-configuration
-#   boot     boot.img (kernel + stage-1), for boot_a/boot_b
-#   images   boot.img + system.img (ext4 rootfs for userdata)
+#   kernel      the kernel package (Image.gz, dtbs, modules)   kernel/
+#   system      the NixOS system (toplevel)                     userspace/
+#   boot        boot.img (kernel + Mobile NixOS stage-1)        userspace/
+#   images      boot.img + system.img (ext4 rootfs)             userspace/
+#   bootloader  U-Boot as a boot.img (work in progress)         bootloader/
 #
-# Extra nix-build arguments go after `--`, e.g. ./build.sh kernel -- --cores 16
+# e.g. ./build.sh kernel system boot -- --cores 16 -j 6
 set -euo pipefail
 
 SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-OUT="${SRC}/build"
-
 log() { printf '[build.sh] %s\n' "$*" >&2; }
 die() { log "ERROR: $*"; exit 1; }
 
@@ -22,26 +21,25 @@ targets=()
 while [ $# -gt 0 ]; do
     case "$1" in
         --) shift; break ;;
-        -h|--help) sed -n '2,12p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -h|--help) sed -n '2,13p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) targets+=("$1") ;;
     esac
     shift
 done
 [ ${#targets[@]} -gt 0 ] || targets=(images)
 
-for m in kernel/linux/Makefile mobile-nixos/default.nix; do
-    [ -f "${SRC}/${m}" ] || die "${m%%/*}/ missing: git submodule update --init --depth 1"
+for m in kernel/linux/Makefile userspace/mobile-nixos/default.nix; do
+    [ -f "${SRC}/${m}" ] || die "${m%/*} missing: git submodule update --init --recursive --depth 1"
 done
 
-mkdir -p "${OUT}/logs"
+mkdir -p "${SRC}/build/logs"
 for t in "${targets[@]}"; do
     case "$t" in
-        kernel) attr=(-E "(import ${SRC}/default.nix {}).config.mobile.boot.stage-1.kernel.package") ;;
-        system) attr=("${SRC}/default.nix" -A config.system.build.toplevel) ;;
-        boot)   attr=("${SRC}/default.nix" -A outputs.android.android-bootimg) ;;
-        images) attr=("${SRC}/default.nix" -A outputs.default) ;;
+        kernel)                   script=buildkernel ;;
+        system|boot|images)       script=builduserspace ;;
+        bootloader)               script=buildbl ;;
         *) die "unknown target: $t" ;;
     esac
     log "$t -> build/$t (log: build/logs/$t.log)"
-    nix-build "${attr[@]}" -o "${OUT}/$t" "$@" 2>&1 | tee "${OUT}/logs/$t.log"
+    bash "${SRC}/scripts/${script}.sh" "$t" "$@" 2>&1 | tee "${SRC}/build/logs/$t.log"
 done

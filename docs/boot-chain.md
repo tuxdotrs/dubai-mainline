@@ -12,8 +12,8 @@
 ## boot.img
 
 Built by Mobile NixOS' android system type
-(`mobile-nixos/modules/system-types/android/`) with these settings from
-`devices/motorola-dubai/default.nix` (values from pmOS `deviceinfo_flash_*`):
+(`userspace/mobile-nixos/modules/system-types/android/`) with these settings from
+`userspace/devices/motorola-dubai/default.nix` (values from pmOS `deviceinfo_flash_*`):
 
 | | |
 |---|---|

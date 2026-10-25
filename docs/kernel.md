@@ -59,7 +59,7 @@ Key points of the expression:
   `kernel.modules` when it exists.
 
 The prebuilt pmOS binary kernel remains available as a fallback:
-`motorola-dubai.kernel = "prebuilt";` (`devices/motorola-dubai/kernel-prebuilt/`,
+`motorola-dubai.kernel = "prebuilt";` (`kernel/prebuilt/`,
 unpacks `linux-postmarketos-qcom-sc7280-7.2.9-r2.apk` from
 mirror.postmarketos.org and runs `depmod`, since the apk ships empty
 `modules.dep/alias` placeholders that Alpine fills at install time).
@@ -138,7 +138,7 @@ which version pmOS ships). Review new Qualcomm/remoteproc options by hand.
 ## Parked: pmOS' exact toolchain
 
 pmOS builds with Alpine clang/lld **23.1.3** and LLVM built with zstd.
-`stuff-might-need-later/toolchain.nix` imports a nixpkgs with clang 23.1.3.
+`kernel/toolchain/toolchain.nix` imports a nixpkgs with clang 23.1.3.
 A strict "config must not change" build failed only on
 `DEBUG_INFO_COMPRESSED_ZSTD` (nixpkgs LLVM lacks zstd; the overlay builds
 libllvm with zstd but clang/lld then fail at CMake `find_package(zstd)`). Not
