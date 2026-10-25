@@ -1,0 +1,108 @@
+# Boot chain
+
+    ABL (bootloader)
+     └─ boot_a: boot.img v2 ─ kernel (Image.gz + appended DTB), DTB section, initrd
+         └─ Mobile NixOS stage-1 (initrd, mruby init)
+             ├─ loads stage-1 modules (panel, touch, USB gadget)
+             ├─ USB networking 172.16.42.1 (RNDIS)
+             ├─ finds rootfs by label NIXOS_SYSTEM on userdata
+             └─ switch_root → /nix/var/nix/profiles/system/init
+                 └─ NixOS stage-2 (systemd) → Plasma Mobile
+
+## boot.img
+
+Built by Mobile NixOS' android system type
+(`mobile-nixos/modules/system-types/android/`) with these settings from
+`devices/motorola-dubai/default.nix` (values from pmOS `deviceinfo_flash_*`):
+
+| | |
+|---|---|
+| header version | 2 (`--header_version 2`, via the fork's `bootimg.extraArgs`) |
+| pagesize | 4096 |
+| base / kernel / ramdisk / tags offset | 0x0 / 0x8000 / 0x01000000 / 0x100 |
+| DTB section | `--dtb …/sm7325-motorola-dubai-<panel>.dtb --dtb_offset 0x01f00000` |
+| appended DTB | yes (`appendDTB`), kernel = Image.gz + dtb |
+| os_patch_level | 2026-06-26 |
+| initrd compression | **zstd -19** (fork adds the option) |
+
+**Ramdisk size limit**: the ramdisk loads at 0x01000000 and the DTB at
+0x01f00000, so the ramdisk must stay under **15 MiB**. With gzip the initrd was
+~15.8 MB and overlapped → zstd. Current sizes: ~12.9 MB with the
+linuxManualConfig kernel (stripped modules), ~14.9 MB with unstripped modules.
+Check every new image:
+
+```python
+import struct
+b = open("boot.img", "rb").read(4096)
+ks, ka, rs, ra = struct.unpack_from("<4I", b, 8)
+print("ramdisk ends", hex(ra + rs), "OK" if ra + rs < 0x1f00000 else "OVERLAP")
+```
+
+`dtbo` must be zeroed (`flash.sh` writes 24 MiB of zeros): ABL can't apply the
+stock overlay to the mainline DTB.
+
+## Stage-1 (Mobile NixOS initrd)
+
+Device settings that matter, and why:
+
+- `mobile.system.android.boot_as_recovery = false` — ABL signals a normal boot
+  with `androidboot.force_normal_boot=1`; in "boot as recovery" mode every boot
+  stopped at the stage-1 generation menu.
+- `has_recovery_partition = false`, `system_partition_destination = "userdata"`.
+- `mobile.boot.boot-control.enable = false` and cmdline
+  `systemd.mask=boot-control.service` — **boot-control corrupted the GPT**
+  (see README rules). The mask in the cmdline covers older generations, but
+  remember ABL replaces the cmdline, so the real protection is the disabled
+  module.
+- Stage-1 modules (pmOS `modules-initfs`): `panel_novatek_nt37701`,
+  `spi_geni_qcom`, `goodix_berlin_core`, `goodix_berlin_spi`; additional:
+  `libcomposite`, `usb_f_fs`, `usb_f_rndis`, `usb_f_mass_storage`.
+- Stage-1 firmware: `qcom/a660_*` and `a660_zap.mbn` (msm is built-in and may
+  request GPU firmware before stage-2).
+- `mobile.boot.stage-1.networking.enable = true` plus the device task
+  `usb-role.rb`, which forces `/sys/class/usb_role/*/role` to `device` —
+  without the ADSP running, pmic-glink can't report the Type-C role and no
+  gadget would appear.
+
+### Fixes carried in the mobile-nixos fork (branch `motorola-dubai`)
+
+| Symptom | Cause | Fix (in fork) |
+|---|---|---|
+| Kernel panic loop right after "Run /init", EBADF | ABL passes `console=null`; the initrd has no device nodes, so PID 1 starts with stdin/out/err closed and the first write fails | init wrapper `mknod /.console c 5 1` and `/.null c 1 3` and redirects stdio (`modules/initrd.nix`) |
+| Stage-1 aborts at udev | `udevadm trigger` fails because qcom-battmgr power supplies return EAGAIN until the ADSP runs | trigger failure made non-fatal (`boot/init/tasks/udev.rb`) |
+| Ramdisk overlaps DTB | gzip initrd too big | `mobile.boot.stage-1.compression = "zstd"` |
+| ABL rejects the image | needs header v2 + DTB section | `mobile.system.android.bootimg.extraArgs`, `qualcomm-sm7325` SoC |
+
+### How stage-1 picks the system
+
+It ignores ABL's `init=/init`, finds `NIXOS_SYSTEM`, and boots
+`/nix/var/nix/profiles/system` (on first boot: the system in
+`/nix-path-registration`). So **the kernel comes from boot.img but the modules
+come from the profile's system**. If boot.img and the profile disagree on the
+kernel version, stage-2 has no modules (no Wi-Fi, no remoteprocs). Always
+change both together.
+
+### Stage-1 failure handling
+
+On an uncaught error, Mobile NixOS writes `/.error.json` (code, message,
+backtrace) and exits with status 99 (`INIT_EXCEPTION`); PID 1 exiting panics
+the kernel and ABL reboots. That is what a "boot loop" looks like here.
+[troubleshooting.md](troubleshooting.md) shows how to read that file.
+
+Ordering quirk worth knowing: the stage-1 DHCPD task depends only on a
+`usb0` interface existing, not on the Environment task that sets `PATH`. If
+`usb0` exists too early (e.g. created by a debug init), `ifconfig` runs with no
+PATH and fails with "Command not found (127)".
+
+## Stage-2
+
+Normal NixOS (systemd). Boot to Plasma takes ~15 s after stage-2 starts.
+
+- The **power key** is handled by logind until Plasma starts; a short press in
+  the first ~15 s powers the phone off cleanly ("Power key pressed short. /
+  Powering off…" in the journal). Not a bug — just don't touch it while
+  booting.
+- **Clock**: the RTC isn't trusted; the clock is wrong until NTP syncs over
+  Wi-Fi, so journal timestamps of early boots overlap.
+- `/sys/fs/pstore` stays empty: `CONFIG_PSTORE_RAM` is off in pmOS' config
+  even though the DT reserves `ramoops@ae000000`.

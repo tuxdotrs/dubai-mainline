@@ -4,6 +4,9 @@ The [sc7280-mainline](https://github.com/sc7280-mainline/linux) kernel with
 [Mobile NixOS](https://github.com/mobile-nixos/mobile-nixos) and Plasma Mobile.
 Device support is a port of pmOS `device-motorola-dubai`.
 
+**Before changing anything, read [docs/](docs/README.md)**: device quirks, the
+boot chain, kernel build pitfalls, deployment, rollback and troubleshooting.
+
 ## Layout
 
     build.sh                   build entry point (see below)
@@ -22,6 +25,8 @@ Device support is a port of pmOS `device-motorola-dubai`.
       qcom.nix                 rmtfs, tqftpserv, hexagonrpcd, bootmac, sensors, modem, SIM
       sound.nix                sc7280 ALSA UCM + wireplumber tweaks
     flash.sh                   fastboot flashing of a full image
+    tools/                     debug boot image builder, stock gpt.bin (GPT recovery)
+    docs/                      device notes, quirks, troubleshooting
     stuff-might-need-later/    pmOS' exact clang 23 toolchain (parked)
 
 The mobile-nixos fork carries what dubai needs on top of upstream: the
