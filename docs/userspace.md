@@ -43,16 +43,27 @@ Symptom: ModemManager reports **sim-missing** although the SIM is present;
 `Primary GW: session doesn't exist`. On Android the RIL activates the
 provisioning session; on Linux nothing does.
 
-Fix: `sim-provisioning.service` (oneshot, before ModemManager) parses the card
-status, finds the first present card's USIM AID and runs:
+Fix: `sim-provisioning.service` (long-running watcher) polls the card status
+every 5 s; when the session doesn't exist it finds the first present card's
+USIM AID, runs the command below, then `systemctl try-restart ModemManager`
+(which otherwise stays in `failed`):
 
 ```sh
 qmicli -d qrtr://0 --uim-change-provisioning-session="slot=$slot,activate=yes,session-type=primary-gw-provisioning,aid=$aid"
 ```
 
 After resume ModemManager drops the modem ("couldn't check support for device
-'qcom-soc'"); `modem-resume.service` (wanted by `suspend.target`) re-runs
-provisioning and restarts ModemManager. (Not yet verified under Plasma.)
+'qcom-soc'"); `modem-resume.service` (wanted by `suspend.target`) restarts
+ModemManager. (Not yet verified under Plasma.)
+
+Why a watcher and not a oneshot: every modem restart drops the session, and
+the modem sometimes restarts on its own. Once seen at boot: no tqftpserv
+requests, kernel `failed to announce new service` (QRTR name service), then
+`qcom_q6v5_pas … fatal error received: dog_hal_common.c:177:DOG detects
+stalled initialization` at ~76 s and again at ~142 s. The old oneshot gave
+up after ~60 s and the SIM stayed "missing". Tested: deactivating the
+session by hand → the watcher re-activates it within 5 s and ModemManager
+re-registers.
 
 Result: registered on JIO, LTE/5G NR.
 

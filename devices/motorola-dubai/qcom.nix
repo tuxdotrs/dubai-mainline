@@ -51,26 +51,32 @@ in
     # Android the RIL does), so ModemManager sees "GW primary session index
     # unknown" and reports sim-missing. Activate the first USIM of the first
     # present card.
+    # The session is lost whenever the modem restarts, and the modem can take
+    # minutes to come up (its watchdog sometimes resets it: "DOG detects
+    # stalled initialization"), so keep watching rather than run once; after
+    # activating, restart ModemManager, which stays failed otherwise.
     sim-provisioning = {
-      description = "Activate the SIM provisioning session";
-      wantedBy = [ "ModemManager.service" ];
+      description = "Keep the SIM provisioning session active";
+      wantedBy = [ "multi-user.target" ];
       before = [ "ModemManager.service" ];
       after = [ "rmtfs.service" ];
       path = [ pkgs.libqmi pkgs.gawk pkgs.gnugrep pkgs.coreutils ];
-      serviceConfig.Type = "oneshot";
+      serviceConfig = {
+        Restart = "always";
+        RestartSec = 5;
+      };
       script = ''
-        for i in $(seq 30); do
-          status=$(qmicli -d qrtr://0 --uim-get-card-status 2>/dev/null) && break
-          sleep 2
+        while sleep 5; do
+          status=$(qmicli -d qrtr://0 --uim-get-card-status 2>/dev/null) || continue
+          echo "$status" | grep -q "Primary GW: *session doesn't exist" || continue
+          read -r slot aid < <(echo "$status" | awk '
+            /^Slot \[/ { s = $2; gsub(/[^0-9]/, "", s) }
+            /Card state: .present./ { present[s] = 1 }
+            /Application type: .*usim/ { usim = 1 }
+            usim && /Application ID:/ { getline; gsub(/[ \t]/, ""); if (present[s]) { print s, $0; exit } usim = 0 }') || continue
+          qmicli -d qrtr://0 --uim-change-provisioning-session="slot=$slot,activate=yes,session-type=primary-gw-provisioning,aid=$aid" || continue
+          systemctl try-restart ModemManager.service || true
         done
-        echo "$status" | grep -q "Primary GW: *session doesn't exist" || exit 0
-        read -r slot aid < <(echo "$status" | awk '
-          /^Slot \[/ { s = $2; gsub(/[^0-9]/, "", s) }
-          /Card state: .present./ { present[s] = 1 }
-          /Application type: .*usim/ { usim = 1 }
-          usim && /Application ID:/ { getline; gsub(/[ \t]/, ""); if (present[s]) { print s, $0; exit } usim = 0 }')
-        [ -n "$aid" ] || { echo "no USIM application found"; exit 0; }
-        qmicli -d qrtr://0 --uim-change-provisioning-session="slot=$slot,activate=yes,session-type=primary-gw-provisioning,aid=$aid"
       '';
     };
 
@@ -81,10 +87,7 @@ in
       wantedBy = [ "suspend.target" ];
       after = [ "suspend.target" ];
       serviceConfig.Type = "oneshot";
-      script = ''
-        systemctl start sim-provisioning.service
-        systemctl restart ModemManager.service
-      '';
+      script = "systemctl restart ModemManager.service";
     };
 
     tqftpserv.wantedBy = [ "multi-user.target" ];

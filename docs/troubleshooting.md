@@ -27,7 +27,7 @@
 | No remoteprocs / Wi-Fi with the prebuilt kernel | empty `modules.dep` from the apk | kernel-prebuilt runs `depmod` |
 | Phone powers off ~15–30 s into boot, journal "Power key pressed short" | someone pressed power before Plasma started | harmless |
 | UI/touch laggy, plasmashell QDBusConnection thread ~70% CPU | mobile-data connection flapping | userspace.md, `nmcli c down Internet` + restart plasmashell |
-| SIM "missing" | no UIM provisioning session | `sim-provisioning.service` |
+| SIM "missing" | no UIM provisioning session | `sim-provisioning.service` (watcher; `journalctl -u sim-provisioning`), check `journalctl -k | grep "crash detected in modem"` |
 | OSK never shows | KWin InputMethod unset or ibus active | userspace.md |
 | Phone not found on LAN | new DHCP address, possibly > .100 | scan whole /24 by host key (deploy.md) |
 | Touch "not responsive" | check `grep goodix /proc/interrupts` grows when touching; if yes the input path is fine and the shell is busy | top -H on plasmashell |
