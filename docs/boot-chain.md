@@ -103,10 +103,18 @@ puts the console on the framebuffer U-Boot leaves behind (DT
 `/chosen/framebuffer`, 0xe1000000) from ~0.3 s; at ~1.6 s msm takes the
 display over (aperture handoff), the console is on msmdrmfb from ~1.9 s until
 sddm takes VT1. Without simpledrm the screen stayed black until Plasma even
-though fbcon bound to msm at 1.6 s. The handoff prints 4 harmless
-`dsi0_phy_pll_out_byteclk already disabled` warnings (simpledrm releasing
-clocks msm already reset). The ABL boot.img on boot_a still has the old
-quiet cmdline until it's reflashed.
+though fbcon bound to msm at 1.6 s. `kernel/patches/dubai-simplefb-dsi-phy-clocks.patch`
+lists the DSI PHY PLL clocks in the framebuffer node, so simpledrm waits for
+the PHY (~0.6 s): otherwise it enabled byte0/pclk0 while their PHY parent was
+still an orphan, the counts never reached the PHY clocks, and the handoff hit
+4 `dsi0_phy_pll_out_byteclk already disabled` warnings. The ABL boot.img on
+boot_a still has the old quiet cmdline until it's reflashed.
+
+**Device tree under U-Boot:** extlinux/bootmenu entries have no FDT, so Linux
+gets U-Boot's own DTB (the one built into boot_b's image, with ABL's fixups;
+`/proc/device-tree/chosen/u-boot,version` shows it). A kernel DT change only
+reaches Linux after rebuilding the bootloader (`./build.sh bootloader`, which
+takes the DTB from the current kernel) and writing it to boot_b.
 
 ## Stage-2
 
