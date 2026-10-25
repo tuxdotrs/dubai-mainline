@@ -94,6 +94,20 @@ Ordering quirk worth knowing: the stage-1 DHCPD task depends only on a
 `usb0` exists too early (e.g. created by a debug init), `ifconfig` runs with no
 PATH and fails with "Command not found (127)".
 
+## Boot log on the display
+
+The boot is verbose on purpose: `userspace/configuration.nix` turns off
+Mobile NixOS' silentBoot and splash and the stage-1 GUI, and sets
+`boot.consoleLogLevel = 7`; the kernel console is `tty1`. `CONFIG_DRM_SIMPLEDRM`
+puts the console on the framebuffer U-Boot leaves behind (DT
+`/chosen/framebuffer`, 0xe1000000) from ~0.3 s; at ~1.6 s msm takes the
+display over (aperture handoff), the console is on msmdrmfb from ~1.9 s until
+sddm takes VT1. Without simpledrm the screen stayed black until Plasma even
+though fbcon bound to msm at 1.6 s. The handoff prints 4 harmless
+`dsi0_phy_pll_out_byteclk already disabled` warnings (simpledrm releasing
+clocks msm already reset). The ABL boot.img on boot_a still has the old
+quiet cmdline until it's reflashed.
+
 ## Stage-2
 
 Normal NixOS (systemd). Boot to Plasma takes ~15 s after stage-2 starts.
