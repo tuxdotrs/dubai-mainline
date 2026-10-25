@@ -110,11 +110,16 @@ still an orphan, the counts never reached the PHY clocks, and the handoff hit
 4 `dsi0_phy_pll_out_byteclk already disabled` warnings. The ABL boot.img on
 boot_a still has the old quiet cmdline until it's reflashed.
 
-**Device tree under U-Boot:** extlinux/bootmenu entries have no FDT, so Linux
-gets U-Boot's own DTB (the one built into boot_b's image, with ABL's fixups;
-`/proc/device-tree/chosen/u-boot,version` shows it). A kernel DT change only
-reaches Linux after rebuilding the bootloader (`./build.sh bootloader`, which
-takes the DTB from the current kernel) and writing it to boot_b.
+**Device tree under U-Boot:** each generation boots its own kernel's DTB.
+`u-boot.nix` copies `dtbs/qcom/sm7325-motorola-dubai-<panel>.dtb` of every menu
+generation's kernel to `/boot/dtbs/` and sets `f` in its menu entry;
+`dubai_fdt` loads it, and booti adds what ABL's DT carried that Linux needs:
+memory banks (U-Boot's, from ABL), bootargs/initrd and a kaslr-seed (DM_RNG).
+ABL's Motorola-only `/chosen/mmi,*` properties are gone with it (unused). An
+entry without a DTB, or a failed load, falls back to U-Boot's built-in DTB
+(the one in the boot_b image, with ABL's fixups); extlinux.conf has no FDT
+line and uses that one too. So DT changes ship with `switch-to-configuration`;
+boot_b only needs rewriting for U-Boot changes.
 
 ## Stage-2
 
