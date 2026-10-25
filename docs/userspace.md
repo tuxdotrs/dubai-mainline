@@ -105,5 +105,3 @@ Quirks:
 ## Known-harmless failed units
 
 - `plymouth-start.service`: plymouthd segfaults; boot works without it.
-- `firewall.service`: `iptables … pkttype revision 0 not supported` —
-  `xt_pkttype` isn't in pmOS' kernel config. Fails on 7.2.9 too.

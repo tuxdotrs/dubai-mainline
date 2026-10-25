@@ -7,8 +7,10 @@
   is the tree pmOS packages as `linux-postmarketos-qcom-sc7280`. The default
   branch is `sc7280-7.2.y`; releases are tags `vX.Y.Z-sc7280`.
 - Config: `kernel/config` = pmOS'
-  `config-postmarketos-qcom-sc7280.aarch64` (written for 7.2.9) plus one line,
-  `CONFIG_HW_RANDOM_QCOM=y`. New options in 7.3 take their defaults from
+  `config-postmarketos-qcom-sc7280.aarch64` (written for 7.2.9) plus
+  `CONFIG_HW_RANDOM_QCOM=y` and the netfilter modules the NixOS firewall uses
+  (`XT_MATCH_PKTTYPE`, `IP_NF_MATCH_RPFILTER`, `IP6_NF_MATCH_RPFILTER`,
+  `XT_MATCH_LIMIT`, `XT_TARGET_LOG`, `NF_LOG_*`). New options in 7.3 take their defaults from
   `make oldconfig` (69 of them for 7.2.9 → 7.3.0; relevant ones: `QCOM_PAS=y`,
   `QCOM_SOC=y`).
 - DTBs: `arch/arm64/boot/dts/qcom/sm7325-motorola-dubai{,-csot,-tianma}.dtb`.

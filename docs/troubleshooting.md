@@ -40,8 +40,9 @@
 - pstore: empty (`CONFIG_PSTORE_RAM` off). Enabling `PSTORE_RAM`,
   `PSTORE_CONSOLE` would give crash logs across warm reboots (DT already has
   `ramoops@ae000000`).
-- Background services: `systemctl --failed`; `firewall` and `plymouth-start`
-  failures are known and harmless.
+- Background services: `systemctl --failed`; a `plymouth-start` failure is
+  known and harmless. `firewall` works since the netfilter options were added
+  to kernel/config (it used to fail on `xt_pkttype`).
 
 ## Debug boot image (the tool that found the 7.3 boot loop)
 

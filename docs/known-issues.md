@@ -19,12 +19,6 @@ GSM connection flaps (`InvalidHandle` on deactivate) and floods D-Bus; keep it
 off. Next steps: set APN `jionet`, check `qmapmux0.0`/rmnet setup and
 ModemManager's QMI over qrtr data path. See userspace.md.
 
-## Firewall
-
-`firewall.service` fails: `xt_pkttype` (and maybe other xt_ matches) not in
-pmOS' kernel config. Add `CONFIG_NETFILTER_XT_MATCH_PKTTYPE=m` (and check
-`nixos-fw` needs: `xt_conntrack`, `xt_LOG`, `nf_log_syslog`).
-
 ## Other
 
 - Plymouth segfaults (harmless).

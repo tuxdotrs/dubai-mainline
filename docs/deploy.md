@@ -75,7 +75,8 @@ For userspace-only changes steps 1, 4 can be skipped.
 
 Backups kept on the owner's PC (`~/Projects/dubai/backup/`):
 `nixos-7.2.9/boot_a.img` (pmOS prebuilt kernel), `nixos-7.3.0-mnbuilder/boot_a.img`
-(7.3.0 via Mobile NixOS builder), stock boot/dtbo/vbmeta/vendor_boot for both
+(7.3.0 via Mobile NixOS builder), `nixos-7.3.0-system10/boot_a.img` (7.3.0
+linuxManualConfig, before the firewall options; whole partition), stock boot/dtbo/vbmeta/vendor_boot for both
 slots, `modem/` (modemst1/2, fsg_a/b, fsc, persist, prodpersist + SHA256SUMS),
 `stock-U1RDS34.80-40-5-6/gpt.bin`.
 
