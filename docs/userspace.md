@@ -57,11 +57,12 @@ After resume ModemManager drops the modem ("couldn't check support for device
 ModemManager. (Not yet verified under Plasma.)
 
 Why a watcher and not a oneshot: every modem restart drops the session, and
-the modem sometimes restarts on its own. Once seen at boot: no tqftpserv
-requests, kernel `failed to announce new service` (QRTR name service), then
+the modem can restart on its own. Seen at boot: no tqftpserv requests, kernel
+`failed to announce new service` (QRTR name service), then
 `qcom_q6v5_pas … fatal error received: dog_hal_common.c:177:DOG detects
 stalled initialization` at ~76 s and again at ~142 s. The old oneshot gave
-up after ~60 s and the SIM stayed "missing". Tested: deactivating the
+up after ~60 s and the SIM stayed "missing". The stall itself was a QRTR
+race, fixed by a kernel patch (kernel.md, Patches). Tested: deactivating the
 session by hand → the watcher re-activates it within 5 s and ModemManager
 re-registers.
 

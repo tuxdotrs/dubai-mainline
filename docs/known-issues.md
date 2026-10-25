@@ -30,6 +30,7 @@ ModemManager's QMI over qrtr data path. See userspace.md.
 - Ramdisk headroom below the DTB offset is ~2 MB; adding stage-1 modules or
   firmware can overflow it.
 - Mobile NixOS kernel-builder DEPMOD bug (kernels ≥ 7.3) to report upstream.
+- `kernel/patches/qrtr-ns-wait-for-hello.patch` to send upstream (netdev).
 
 ## Dual boot with LineageOS (analysis, not done)
 

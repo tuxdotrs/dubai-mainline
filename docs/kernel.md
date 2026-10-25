@@ -64,6 +64,22 @@ unpacks `linux-postmarketos-qcom-sc7280-7.2.9-r2.apk` from
 mirror.postmarketos.org and runs `depmod`, since the apk ships empty
 `modules.dep/alias` placeholders that Alpine fills at install time).
 
+## Patches (`kernel/patches/`, applied via `kernelPatches`)
+
+- `qrtr-ns-wait-for-hello.patch` — **modem stalls at boot**. af_qrtr refuses
+  every packet to a remote node with `-EAGAIN` until our own HELLO to it has
+  been sent (from a work item, `af_qrtr.c` `hello_sent`). When the remote's
+  HELLO reaches the QRTR name service first, `announce_servers()` got
+  `-EAGAIN` on the first service and returned, so the remote never learned of
+  *any* local service. For the modem that means no rmtfs/tqftpserv → its
+  watchdog fires 65 s later (`DOG detects stalled initialization`), repeat.
+  The race is timing-dependent: it hit 3/3 boots once the NixOS firewall
+  started successfully (which shifts early boot by ~0.2 s), 0/5 before. Found
+  with kprobes on `service_announce_new`/`qrtr_node_enqueue` (retval -11).
+  The patch retries `-EAGAIN` (20 ms × 50) and continues past other errors.
+  Verified 3/3 clean boots with the firewall on. Candidate for upstream
+  (net/qrtr; mainline only skips `-ENODEV` there).
+
 ## Build history: every failure and its cause
 
 Kept so nobody re-walks this path.

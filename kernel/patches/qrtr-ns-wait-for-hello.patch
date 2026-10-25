@@ -1,0 +1,48 @@
+--- a/net/qrtr/ns.c
++++ b/net/qrtr/ns.c
+@@ -5,6 +5,7 @@
+  * Copyright (c) 2020, Linaro Ltd.
+  */
+ 
++#include <linux/delay.h>
+ #include <linux/module.h>
+ #include <linux/qrtr.h>
+ #include <linux/workqueue.h>
+@@ -218,7 +219,7 @@
+ 	struct qrtr_server *srv;
+ 	struct qrtr_node *node;
+ 	unsigned long index;
+-	int ret;
++	int ret, tries;
+ 
+ 	node = node_get(qrtr_ns.local_node);
+ 	if (!node)
+@@ -226,14 +227,21 @@
+ 
+ 	/* Announce the list of servers registered in this node */
+ 	xa_for_each(&node->servers, index, srv) {
+-		ret = service_announce_new(sq, srv);
+-		if (ret < 0) {
+-			if (ret == -ENODEV)
+-				continue;
+-
+-			pr_err("failed to announce new service\n");
+-			return ret;
++		/*
++		 * The remote's HELLO can be handled here before our own HELLO
++		 * to it has gone out (af_qrtr sends that from a work item); until
++		 * then af_qrtr refuses other packets with -EAGAIN. Wait for it
++		 * rather than leave the remote without any of our services.
++		 */
++		for (tries = 0; tries < 50; tries++) {
++			ret = service_announce_new(sq, srv);
++			if (ret != -EAGAIN)
++				break;
++			msleep(20);
+ 		}
++		if (ret < 0 && ret != -ENODEV)
++			pr_err("failed to announce service %u:%u to node %u: %d\n",
++			       srv->service, srv->instance, sq->sq_node, ret);
+ 	}
+ 	return 0;
+ }

@@ -25,6 +25,11 @@ in
     filter = path: _: baseNameOf path != ".git";
   };
   configfile = ./config;
+  kernelPatches = map (p: { name = baseNameOf p; patch = p; }) [
+    # The modem sometimes never learned of rmtfs/tqftpserv and its watchdog
+    # reset it ("DOG detects stalled initialization"); see docs/kernel.md
+    ./patches/qrtr-ns-wait-for-hello.patch
+  ];
   # boot.img uses the gzip'd Image, like pmOS (its /boot/vmlinuz)
   target = "Image.gz";
   # common-flags.nix passes this stdenv's clang unwrapped as CC
