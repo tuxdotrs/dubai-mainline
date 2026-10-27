@@ -9,7 +9,7 @@
 #   boot        boot.img (kernel + Mobile NixOS stage-1)        userspace/
 #   images      boot.img + system.img (ext4 rootfs)             userspace/
 #   bootloader  U-Boot as a boot.img (installed on boot_b)       bootloader/
-#   denial      Denial compositor, ARM64 cross-build (docker)   tools/denial/
+#   denial      Denial compositor, ARM64 cross-build (docker)   userspace/denial/
 #
 # e.g. ./build.sh kernel system boot -- --cores 16 -j 6
 set -euo pipefail

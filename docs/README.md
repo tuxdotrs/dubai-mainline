@@ -47,8 +47,7 @@ Meta repo (like SuperTurtleDev/iceland-mainline) with one submodule per part:
     build.sh                   ./build.sh [kernel|system|boot|images|bootloader|denial] → build/
     scripts/                   buildkernel.sh, builduserspace.sh, buildbl.sh, builddenial.sh (called by build.sh)
     flash.sh                   full fastboot flash
-    tools/                     debug boot image builder, stock gpt.bin (GPT recovery),
-                               denial/ (docker ARM64 cross-build of Denial)
+    tools/                     debug boot image builder, stock gpt.bin (GPT recovery)
     docs/                      these notes
     bootloader/                submodule: tuxdotrs/dubai-mainline-bootloader (U-Boot, on boot_b)
       u-boot/                    submodule: u-boot/u-boot, main at 8649a54d (past v2026.10)
@@ -63,6 +62,7 @@ Meta repo (like SuperTurtleDev/iceland-mainline) with one submodule per part:
       default.nix                Mobile NixOS + device + configuration.nix
       configuration.nix          the phone's system (Denial via greetd, Waydroid, user, ssh…)
       denial/                    Denial package (ARM64 payload + upstream packaging files)
+        cross-build/               docker ARM64 cross-build of the payload (./build.sh denial)
       devices/motorola-dubai/    device module, firmware, qcom services, sound
       mobile-nixos/              submodule: upstream Mobile NixOS (branch development)
       patches/                   our Mobile NixOS changes, applied by default.nix

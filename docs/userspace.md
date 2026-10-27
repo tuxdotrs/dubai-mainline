@@ -123,9 +123,9 @@ shell), pinned in `userspace/denial/source.nix`. Its own Nix package is
 x86_64-only (pinned x86-64 Flutter engine and Dart SDK), so:
 
 - **ARM64 build**: `./build.sh denial` in the meta repo runs Denial's
-  CROSS_BUILDING.md in a Debian trixie container (`tools/denial/Dockerfile`,
-  `tools/denial/cross-build.sh`; needs docker on the build host). It builds the
-  Flutter engine (gclient checkout of Denial's flutter/skia forks, gn/ninja;
+  CROSS_BUILDING.md in a Debian trixie container
+  (`userspace/denial/cross-build/`; needs docker on the build host). It builds
+  the Flutter engine (gclient checkout of Denial's flutter/skia forks, gn/ninja;
   ~50 min on the first run, then cached in `~/.cache/denial-docker`), assembles
   the shell plus the Settings and Polkit Flutter apps for linux-arm64, and
   cross-compiles the compositor, portal, polkit agent and `denial-app` runner

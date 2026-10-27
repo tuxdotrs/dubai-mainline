@@ -21,7 +21,7 @@ git clone --recursive --shallow-submodules <repo>     # or: git submodule update
 | boot | `-A outputs.android.android-bootimg` |
 | images | `-A outputs.default` (boot.img + system.img) |
 | bootloader | `bootloader/default.nix` (U-Boot boot.img for boot_b) |
-| denial | not Nix: `tools/denial/` cross-build in docker → `build/denial/*.tar.gz` |
+| denial | not Nix: `userspace/denial/cross-build/` in docker → `build/denial/*.tar.gz` |
 
 The Denial ARM64 payload is downloaded from a GitHub release (userspace.md);
 `./build.sh denial` (docker; ~50 min the first time, incremental afterwards) is
