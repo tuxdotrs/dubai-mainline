@@ -102,12 +102,21 @@ Mobile NixOS' silentBoot and splash and the stage-1 GUI, and sets
 puts the console on the framebuffer U-Boot leaves behind (DT
 `/chosen/framebuffer`, 0xe1000000) from ~0.3 s; at ~1.6 s msm takes the
 display over (aperture handoff), the console is on msmdrmfb from ~1.9 s until
-sddm takes VT1. Without simpledrm the screen stayed black until Plasma even
-though fbcon bound to msm at 1.6 s. `kernel/patches/dubai-simplefb-dsi-phy-clocks.patch`
-lists the DSI PHY PLL clocks in the framebuffer node, so simpledrm waits for
-the PHY (~0.6 s): otherwise it enabled byte0/pclk0 while their PHY parent was
-still an orphan, the counts never reached the PHY clocks, and the handoff hit
-4 `dsi0_phy_pll_out_byteclk already disabled` warnings. The ABL boot.img on
+sddm takes VT1. The panel used to stay dark from the handoff until Plasma:
+the bootloader leaves the panel on, the nt37701 driver resets it at probe, and
+a panel reset in sleep-out mode runs its own power-off sequence and ignores
+commands until it's done. The first init went out ~70 ms after the reset, so
+the panel lost most of it (sleep-out 0x11 and BCTRL 0x53 among them: power
+mode read 0x0c instead of 0x9c, brightness writes ignored) and only
+display-on arrived. `kernel/patches/nt37701-wait-after-reset-from-bootloader.patch`
+waits 120 ms after the reset on the first prepare only (unblank sends
+sleep-in before the reset, so it needs no wait). The handoff prints 4
+`dsi0_phy_pll_out_byteclk already disabled/unprepared` warnings (byte0/pclk0
+were enabled while their DSI PHY parent was unregistered; the counts never
+reach the PHY clocks). Cosmetic. Listing the PHY clocks in the framebuffer
+node silences them but makes simpledrm wait for the PHY (~0.6 s), and by then
+the bootloader's scan-out has stopped: no boot log at all. So: warnings kept,
+root cause still open (see known-issues). The ABL boot.img on
 boot_a still has the old quiet cmdline until it's reflashed.
 
 **Device tree under U-Boot:** each generation boots its own kernel's DTB.

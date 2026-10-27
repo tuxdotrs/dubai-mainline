@@ -43,6 +43,16 @@ ModemManager's QMI over qrtr data path. See userspace.md.
   ABL marks the slot unbootable and silently switches slots (slot a hit this
   on 2026-10-26). `fastboot --set-active=<slot>` resets the counter.
 
+- 4 `dsi0_phy_pll_out_byteclk already disabled/unprepared` warnings when msm
+  takes the display over from simpledrm (~1.6 s). A boot clk trace shows
+  simpledrm enabling disp_cc_mdss_byte0/pclk0 at ~0.3 s with no event on the
+  DSI PHY PLL clocks, and no clk_set_parent before the release. When the PHY
+  registers its clocks (~0.6 s), orphan adoption prepares the still
+  unconfigured PLL ("DSI PLL(0) lock failed"); `__clk_set_parent_before`
+  ignores that error and the counts end up unbalanced. Making simpledrm wait
+  for the PHY (DT) fixes the warnings but loses the early boot log. Not the
+  cause of the dark console (that was the panel reset timing, boot-chain.md).
+
 ## Dual boot with LineageOS (analysis, not done)
 
 Possible as one OS per A/B slot (NixOS slot a, Lineage slot b; switch with
