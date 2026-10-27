@@ -58,8 +58,7 @@ troubleshooting.md (Logs).
   `systemd-run` session) starts tuigreet on the same VT; `systemctl mask
   --runtime greetd` doesn't prevent it (`/etc` overrides `/run`). No issue when
   greetd started Denial.
-- The ARM64 payload isn't published; fresh clones need `./build.sh denial`
-  (docker). The plugin manager isn't built.
+- The plugin manager isn't built for ARM64.
 
 ## Sensors start slowly
 

@@ -130,9 +130,14 @@ x86_64-only (pinned x86-64 Flutter engine and Dart SDK), so:
   the shell plus the Settings and Polkit Flutter apps for linux-arm64, and
   cross-compiles the compositor, portal, polkit agent and `denial-app` runner
   against the container's arm64 multiarch libraries. Output:
-  `build/denial/denial-linux-arm64-<rev>.tar.gz` (~48 MB), local only: a fresh
-  clone must run it before `./build.sh system` (the configuration asserts the
-  file exists).
+  `build/denial/denial-linux-arm64-<rev>.tar.gz` (~48 MB). It is published
+  as a release of dubai-mainline-userspace (tag `denial-<rev:8>`) and the
+  configuration fetches it from there (`denial/source.nix`: URL + hash), so
+  builds don't need docker. Only a new Denial revision needs the cross-build:
+  build, `gh release create denial-<rev:8> --repo
+  tuxdotrs/dubai-mainline-userspace <tarball>`, update `rev`/hashes. To test a
+  local build first, pass `payload = ../build/denial/<file>` in
+  `configuration.nix`.
 - **Package** (`userspace/denial/default.nix`): that payload plus the
   packaging files of the same revision, laid out like Denial's
   `nix/package.nix` (session script, systemd user units, portals, `.desktop`
