@@ -7,7 +7,7 @@
              ├─ USB networking 172.16.42.1 (RNDIS)
              ├─ finds rootfs by label NIXOS_SYSTEM on userdata
              └─ switch_root → /nix/var/nix/profiles/system/init
-                 └─ NixOS stage-2 (systemd) → Plasma Mobile
+                 └─ NixOS stage-2 (systemd) → greetd → Denial
 
 ## boot.img
 
@@ -105,7 +105,7 @@ Mobile NixOS' silentBoot and splash and the stage-1 GUI, and sets
 puts the console on the framebuffer U-Boot leaves behind (DT
 `/chosen/framebuffer`, 0xe1000000) from ~0.3 s; at ~1.6 s msm takes the
 display over (aperture handoff), the console is on msmdrmfb from ~1.9 s until
-sddm takes VT1. The panel used to stay dark from the handoff until Plasma:
+Denial (greetd) takes VT1. The panel used to stay dark from the handoff until the desktop started:
 the bootloader leaves the panel on, the nt37701 driver resets it at probe, and
 a panel reset in sleep-out mode runs its own power-off sequence and ignores
 commands until it's done. The first init went out ~70 ms after the reset, so
@@ -135,9 +135,10 @@ boot_b only needs rewriting for U-Boot changes.
 
 ## Stage-2
 
-Normal NixOS (systemd). Boot to Plasma takes ~15 s after stage-2 starts.
+Normal NixOS (systemd). greetd starts Denial ~10 s after stage-2 starts.
 
-- The **power key** is handled by logind until Plasma starts; a short press in
+- The **power key** is handled by logind until Denial starts (then by
+  Denial's `power.powerButtonAction`); a short press in
   the first ~15 s powers the phone off cleanly ("Power key pressed short. /
   Powering off…" in the journal). Not a bug — just don't touch it while
   booting.

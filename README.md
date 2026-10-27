@@ -1,7 +1,8 @@
 # Mobile NixOS on the Motorola Edge 30 (dubai)
 
 The [sc7280-mainline](https://github.com/sc7280-mainline/linux) kernel with
-[Mobile NixOS](https://github.com/mobile-nixos/mobile-nixos) and Plasma Mobile.
+[Mobile NixOS](https://github.com/mobile-nixos/mobile-nixos) and the
+[Denial](https://github.com/denialwm/denial) Wayland compositor.
 Device support is a port of pmOS `device-motorola-dubai`.
 
 **Before changing anything, read [docs/](docs/README.md)**: device quirks, the
@@ -11,12 +12,12 @@ boot chain, kernel build pitfalls, deployment, rollback and troubleshooting.
 
 A meta repo with one submodule per part:
 
-    build.sh       entry point: ./build.sh [kernel|system|boot|images|bootloader]
+    build.sh       entry point: ./build.sh [kernel|system|boot|images|bootloader|denial]
     scripts/       per-part build scripts called by build.sh
     flash.sh       fastboot flashing of a full image
-    tools/         debug boot image builder, stock gpt.bin (GPT recovery)
+    tools/         debug boot image builder, stock gpt.bin, Denial ARM64 cross-build
     docs/          device notes, quirks, troubleshooting
-    bootloader/    tuxdotrs/dubai-mainline-bootloader: U-Boot chainloaded by ABL (WIP)
+    bootloader/    tuxdotrs/dubai-mainline-bootloader: U-Boot chainloaded by ABL (boot_b)
     kernel/        tuxdotrs/dubai-mainline-kernel: sc7280-mainline + config + patches
     userspace/     tuxdotrs/dubai-mainline-userspace: NixOS config, device module, Mobile NixOS
 

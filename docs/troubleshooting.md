@@ -25,12 +25,17 @@
 | ABL shows no partitions / only fastboot, slot-count 1 | GPT rewritten (boot-control) | deploy.md GPT recovery |
 | Boots, but no Wi-Fi, no remoteprocs, USB 172.16.42.1 works | kernel in boot.img ≠ modules of the profile | deploy.md rollback |
 | No remoteprocs / Wi-Fi with the prebuilt kernel | empty `modules.dep` from the apk | `kernel/prebuilt` runs `depmod` |
-| Phone powers off ~15–30 s into boot, journal "Power key pressed short" | someone pressed power before Plasma started | harmless |
-| UI/touch laggy, plasmashell QDBusConnection thread ~70% CPU | mobile-data connection flapping | userspace.md, `nmcli c down Internet` + restart plasmashell |
+| Phone powers off ~15–30 s into boot, journal "Power key pressed short" | power pressed before Denial started (logind handles the key until then) | harmless |
+| Phone powers off/reboots on a short power press, journal "poweroff requested from client 'deniald'" | Denial shell default `power.powerButtonAction = powerOff` | set `dpms` in `~/.config/denial/settings.json` (userspace.md) |
+| UI/touch laggy under Denial | CPU frequency ramp + 144 Hz frame budget | known-issues.md (Denial: lag) |
+| D-Bus flood, shell thread pinned (seen under Plasma) | mobile-data connection flapping | userspace.md, `nmcli c down Internet` |
 | SIM "missing" | no UIM provisioning session | `sim-provisioning.service` (watcher; `journalctl -u sim-provisioning`), check `journalctl -k | grep "crash detected in modem"` |
-| OSK never shows | KWin InputMethod unset or ibus active | userspace.md |
+| OSK never shows | Denial's keyboard is part of the mobile shell profile | `DENIAL_SHELL_PROFILE=mobile` in `/etc/denial/session.conf` |
+| tuigreet login instead of Denial | `denial-session` exited (greetd runs `initial_session` once per boot) | run the session with logs (below), `denial-session --check` |
+| No auto-rotate, iio-sensor-proxy "No sensors" | udev type tags or SSC not ready yet | userspace.md (Sensors) |
+| `waydroid init`: "No such file or directory: 'mkdir'" | no PATH (e.g. under `systemd-run`) | `--setenv=PATH=/run/wrappers/bin:/run/current-system/sw/bin` |
 | Phone not found on LAN | new DHCP address, possibly > .100 | scan whole /24 by host key (deploy.md) |
-| Touch "not responsive" | check `grep goodix /proc/interrupts` grows when touching; if yes the input path is fine and the shell is busy | top -H on plasmashell |
+| Touch "not responsive" | check `grep goodix /proc/interrupts` grows when touching; if yes the input path is fine and the shell is busy | `top -H -p $(pgrep -x deniald)` |
 
 ## Logs
 
@@ -40,6 +45,19 @@
 - pstore: empty (`CONFIG_PSTORE_RAM` off). Enabling `PSTORE_RAM`,
   `PSTORE_CONSOLE` would give crash logs across warm reboots (DT already has
   `ramoops@ae000000`).
+- **Denial**: greetd discards the session's output. To see it (or run with
+  the render audit), stop greetd and start the session yourself on tty1:
+
+  ```sh
+  sudo systemctl stop greetd
+  sudo systemd-run --unit=denial-test --collect -p User=user -p PAMName=login \
+    -p TTYPath=/dev/tty1 -p StandardInput=tty -p TTYReset=yes -p TTYVHangup=yes \
+    -E XDG_SEAT=seat0 -E XDG_VTNR=1 -E XDG_SESSION_TYPE=wayland -E XDG_SESSION_CLASS=user \
+    -E DENIAL_RENDER_AUDIT=1 \
+    /bin/sh -c 'exec /run/current-system/sw/bin/denial-session >/tmp/denial.log 2>&1'
+  ```
+
+  `RUST_LOG` debug levels are compiled out of release builds (info max).
 - Background services: `systemctl --failed` should be empty. (`firewall`
   used to fail on `xt_pkttype`, `plymouth-start` on `console=null`; both
   fixed.)

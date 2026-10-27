@@ -20,7 +20,12 @@ git clone --recursive --shallow-submodules <repo>     # or: git submodule update
 | system | `-A config.system.build.toplevel` |
 | boot | `-A outputs.android.android-bootimg` |
 | images | `-A outputs.default` (boot.img + system.img) |
-| bootloader | `bootloader/default.nix` (U-Boot, WIP) |
+| bootloader | `bootloader/default.nix` (U-Boot boot.img for boot_b) |
+| denial | not Nix: `tools/denial/` cross-build in docker → `build/denial/*.tar.gz` |
+
+The system needs the Denial ARM64 payload first: on a fresh clone run
+`./build.sh denial` once per Denial revision (docker; ~50 min the first time,
+incremental afterwards; see userspace.md).
 
 Kernel builds take ~10–15 min on 16 cores; a fresh clone of the repo produces
 bit-identical derivations (verified).

@@ -8,7 +8,8 @@
 #   system      the NixOS system (toplevel)                     userspace/
 #   boot        boot.img (kernel + Mobile NixOS stage-1)        userspace/
 #   images      boot.img + system.img (ext4 rootfs)             userspace/
-#   bootloader  U-Boot as a boot.img (work in progress)         bootloader/
+#   bootloader  U-Boot as a boot.img (installed on boot_b)       bootloader/
+#   denial      Denial compositor, ARM64 cross-build (docker)   tools/denial/
 #
 # e.g. ./build.sh kernel system boot -- --cores 16 -j 6
 set -euo pipefail
@@ -21,7 +22,7 @@ targets=()
 while [ $# -gt 0 ]; do
     case "$1" in
         --) shift; break ;;
-        -h|--help) sed -n '2,13p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -h|--help) sed -n '2,14p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) targets+=("$1") ;;
     esac
     shift
@@ -38,6 +39,7 @@ for t in "${targets[@]}"; do
         kernel)                   script=buildkernel ;;
         system|boot|images)       script=builduserspace ;;
         bootloader)               script=buildbl ;;
+        denial)                   script=builddenial ;;
         *) die "unknown target: $t" ;;
     esac
     log "$t -> build/$t (log: build/logs/$t.log)"

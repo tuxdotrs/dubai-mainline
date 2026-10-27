@@ -12,7 +12,7 @@ project up cold.
 | [device.md](device.md) | Hardware, partitions, bootloader facts, identifiers |
 | [boot-chain.md](boot-chain.md) | ABL → boot.img → Mobile NixOS stage-1 → stage-2, and every boot quirk |
 | [kernel.md](kernel.md) | Kernel source, config, toolchain, build pitfalls and how to verify a build |
-| [userspace.md](userspace.md) | Firmware, Qualcomm services, modem/SIM, Wi-Fi, audio, Plasma Mobile, OSK |
+| [userspace.md](userspace.md) | Firmware, Qualcomm services, sensors, modem/SIM, Wi-Fi, audio, Denial desktop, Waydroid |
 | [deploy.md](deploy.md) | Building, updating a running phone, full flash, backups, rollback |
 | [troubleshooting.md](troubleshooting.md) | Debugging methods (debug boot image, logs) and a symptom → cause table |
 | [known-issues.md](known-issues.md) | What doesn't work yet, and ideas for each |
@@ -44,13 +44,14 @@ These each cost hours; one nearly bricked the phone.
 
 Meta repo (like SuperTurtleDev/iceland-mainline) with one submodule per part:
 
-    build.sh                   ./build.sh [kernel|system|boot|images|bootloader] → build/
-    scripts/                   buildkernel.sh, builduserspace.sh, buildbl.sh (called by build.sh)
+    build.sh                   ./build.sh [kernel|system|boot|images|bootloader|denial] → build/
+    scripts/                   buildkernel.sh, builduserspace.sh, buildbl.sh, builddenial.sh (called by build.sh)
     flash.sh                   full fastboot flash
-    tools/                     debug boot image builder, stock gpt.bin (GPT recovery)
+    tools/                     debug boot image builder, stock gpt.bin (GPT recovery),
+                               denial/ (docker ARM64 cross-build of Denial)
     docs/                      these notes
-    bootloader/                submodule: tuxdotrs/dubai-mainline-bootloader (U-Boot port, WIP)
-      u-boot/                    submodule: u-boot/u-boot, tag v2026.10
+    bootloader/                submodule: tuxdotrs/dubai-mainline-bootloader (U-Boot, on boot_b)
+      u-boot/                    submodule: u-boot/u-boot, main at 8649a54d (past v2026.10)
     kernel/                    submodule: tuxdotrs/dubai-mainline-kernel
       linux/                     submodule: sc7280-mainline/linux (tag v7.3.0-sc7280)
       config                     pmOS kernel config (+ our additions)
@@ -60,7 +61,8 @@ Meta repo (like SuperTurtleDev/iceland-mainline) with one submodule per part:
       toolchain/                 parked clang-23 toolchain (pmOS' exact compiler)
     userspace/                 submodule: tuxdotrs/dubai-mainline-userspace
       default.nix                Mobile NixOS + device + configuration.nix
-      configuration.nix          the phone's system (Plasma Mobile, user, ssh…)
+      configuration.nix          the phone's system (Denial via greetd, Waydroid, user, ssh…)
+      denial/                    Denial package (ARM64 payload + upstream packaging files)
       devices/motorola-dubai/    device module, firmware, qcom services, sound
       mobile-nixos/              submodule: upstream Mobile NixOS (branch development)
       patches/                   our Mobile NixOS changes, applied by default.nix
