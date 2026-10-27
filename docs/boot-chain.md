@@ -17,13 +17,13 @@ Built by Mobile NixOS' android system type
 
 | | |
 |---|---|
-| header version | 2 (`--header_version 2`, via the fork's `bootimg.extraArgs`) |
+| header version | 2 (`--header_version 2`, via `bootimg.extraArgs` from userspace/patches) |
 | pagesize | 4096 |
 | base / kernel / ramdisk / tags offset | 0x0 / 0x8000 / 0x01000000 / 0x100 |
 | DTB section | `--dtb …/sm7325-motorola-dubai-<panel>.dtb --dtb_offset 0x01f00000` |
 | appended DTB | yes (`appendDTB`), kernel = Image.gz + dtb |
 | os_patch_level | 2026-06-26 |
-| initrd compression | **zstd -19** (fork adds the option) |
+| initrd compression | **zstd -19** (userspace/patches adds the option) |
 
 **Ramdisk size limit**: the ramdisk loads at 0x01000000 and the DTB at
 0x01f00000, so the ramdisk must stay under **15 MiB**. With gzip the initrd was
@@ -64,14 +64,17 @@ Device settings that matter, and why:
   without the ADSP running, pmic-glink can't report the Type-C role and no
   gadget would appear.
 
-### Fixes carried in the mobile-nixos fork (branch `motorola-dubai`)
+### Mobile NixOS fixes in `userspace/patches/`
 
-| Symptom | Cause | Fix (in fork) |
+`userspace/default.nix` applies them to the upstream submodule and evaluates
+the patched tree.
+
+| Symptom | Cause | Fix (patch) |
 |---|---|---|
-| Kernel panic loop right after "Run /init", EBADF | ABL passes `console=null`; the initrd has no device nodes, so PID 1 starts with stdin/out/err closed and the first write fails | init wrapper `mknod /.console c 5 1` and `/.null c 1 3` and redirects stdio (`modules/initrd.nix`) |
-| Stage-1 aborts at udev | `udevadm trigger` fails because qcom-battmgr power supplies return EAGAIN until the ADSP runs | trigger failure made non-fatal (`boot/init/tasks/udev.rb`) |
-| Ramdisk overlaps DTB | gzip initrd too big | `mobile.boot.stage-1.compression = "zstd"` |
-| ABL rejects the image | needs header v2 + DTB section | `mobile.system.android.bootimg.extraArgs`, `qualcomm-sm7325` SoC |
+| Kernel panic loop right after "Run /init", EBADF | ABL passes `console=null`; the initrd has no device nodes, so PID 1 starts with stdin/out/err closed and the first write fails | init wrapper `mknod /.console c 5 1` and `/.null c 1 3` and redirects stdio (`stage-1-console-stdio.patch`) |
+| Stage-1 aborts at udev | `udevadm trigger` fails because qcom-battmgr power supplies return EAGAIN until the ADSP runs | trigger failure made non-fatal (`stage-1-udev-trigger-nonfatal.patch`) |
+| Ramdisk overlaps DTB | gzip initrd too big | `mobile.boot.stage-1.compression = "zstd"` (`stage-1-zstd.patch`) |
+| ABL rejects the image | needs header v2 + DTB section | `mobile.system.android.bootimg.extraArgs`, `qualcomm-sm7325` SoC (`android-bootimg-extra-args.patch`, `qualcomm-sm7325.patch`) |
 
 ### How stage-1 picks the system
 

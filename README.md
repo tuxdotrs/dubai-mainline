@@ -21,10 +21,10 @@ A meta repo with one submodule per part:
     userspace/     tuxdotrs/dubai-mainline-userspace: NixOS config, device module, Mobile NixOS
 
 Each submodule has its own README. The kernel tracks sc7280-mainline tags
-directly and U-Boot tracks upstream releases; neither is forked. Mobile NixOS
-comes from the fork tuxdotrs/mobile-nixos (branch `motorola-dubai`), which
-carries the `qualcomm-sm7325` SoC, `mobile.system.android.bootimg.extraArgs`
-and stage-1 fixes.
+directly and U-Boot tracks upstream releases; Mobile NixOS is upstream too.
+None of them is forked: changes live in each repo's `patches/` (for Mobile
+NixOS: the `qualcomm-sm7325` SoC, `mobile.system.android.bootimg.extraArgs`
+and stage-1 fixes).
 
 ## Getting the sources
 

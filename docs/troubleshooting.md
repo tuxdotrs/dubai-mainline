@@ -20,7 +20,7 @@
 | Symptom | Likely cause | Where |
 |---|---|---|
 | Boot loop, never in journal, gadget appears ~45 s then reset | stage-1 exception (exit 99), e.g. initrd without modules | read `/.error.json` with the debug image below; kernel.md #4 |
-| Boot loop immediately after kernel start, EBADF | no `/dev/console` for PID 1 | boot-chain.md (fixed in fork) |
+| Boot loop immediately after kernel start, EBADF | no `/dev/console` for PID 1 | boot-chain.md (fixed in userspace/patches) |
 | Stops at a "generation" menu every boot | `boot_as_recovery = true` | boot-chain.md |
 | ABL shows no partitions / only fastboot, slot-count 1 | GPT rewritten (boot-control) | deploy.md GPT recovery |
 | Boots, but no Wi-Fi, no remoteprocs, USB 172.16.42.1 works | kernel in boot.img ≠ modules of the profile | deploy.md rollback |

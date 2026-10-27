@@ -62,7 +62,8 @@ Meta repo (like SuperTurtleDev/iceland-mainline) with one submodule per part:
       default.nix                Mobile NixOS + device + configuration.nix
       configuration.nix          the phone's system (Plasma Mobile, user, ssh…)
       devices/motorola-dubai/    device module, firmware, qcom services, sound
-      mobile-nixos/              submodule: tuxdotrs/mobile-nixos, branch motorola-dubai
+      mobile-nixos/              submodule: upstream Mobile NixOS (branch development)
+      patches/                   our Mobile NixOS changes, applied by default.nix
 
 Clone with `git clone --recursive --shallow-submodules`.
 
